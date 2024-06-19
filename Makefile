@@ -1,22 +1,22 @@
-# Define the name of the binary
-BINARY_NAME=simplebank
+postgres:
+	docker run -d --name postgres -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret postgres
 
-# Default target executed when no arguments are given to make
-.PHONY: all
-all: build
+postgrescmd:
+	docker exec -it postgres psql -U root
 
-# Rule to build the Go project
-.PHONY: build
-build:
-	go build -o $(BINARY_NAME) ./cmd/.
+createdb:
+	docker exec -it postgres createdb --username=root --owner=root simple_bank
 
-# Rule to run the application
-.PHONY: run
-run:
-	go run ./cmd/.
+dropdb:
+	docker exec -it postgres drop simple_bank
 
-# Rule to clean the project directory
-.PHONY: clean
-clean:
-	rm -f $(BINARY_NAME)
-	
+migrateup:
+	migrate -path internal/db/migrate -database "postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose up
+
+migratedown:
+	migrate -path internal/db/migrate -database "postgresql://root:secret@localhost:5432/simple_bank?sslmode=disable" -verbose down
+
+sqlc:
+	sqlc generate
+
+.PHONY: postgres postgrescmd createdb dropdb migrateup migratedown sqlc
