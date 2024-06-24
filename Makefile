@@ -19,4 +19,10 @@ migratedown:
 sqlc:
 	sqlc generate
 
-.PHONY: postgres postgrescmd createdb dropdb migrateup migratedown sqlc
+build:
+	go build -o simple-bank ./cmd/main.go
+
+run:
+	go run ./cmd/.
+
+.PHONY: postgres postgrescmd createdb dropdb migrateup migratedown sqlc build run
