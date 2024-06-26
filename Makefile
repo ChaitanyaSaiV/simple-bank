@@ -1,3 +1,6 @@
+postgrespull:
+	docker pull postgres:latest
+
 postgres:
 	docker run -d --name postgres -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret postgres
 
@@ -22,7 +25,10 @@ sqlc:
 build:
 	go build -o simple-bank ./cmd/main.go
 
-run:
+server:
 	go run ./cmd/.
 
-.PHONY: postgres postgrescmd createdb dropdb migrateup migratedown sqlc build run
+test:
+	go test -v -cover ./...
+
+.PHONY: postgrespull postgres postgrescmd createdb dropdb migrateup migratedown sqlc build server test
