@@ -10,8 +10,9 @@ import (
 
 // TestCreateDummyAccount creates a dummy account for testing purposes
 func createDummyAccount(t *testing.T) Account {
+	user := createDummyUser(t)
 	arg := CreateAccountParams{
-		Owner:    util.RandomOwner(),
+		Owner:    user.Username,
 		Balance:  util.RandomMoney(),
 		Currency: util.RandomCurrency(),
 	}

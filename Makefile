@@ -31,4 +31,7 @@ server:
 test:
 	go test -v -cover ./...
 
-.PHONY: postgrespull postgres postgrescmd createdb dropdb migrateup migratedown sqlc build server test
+vendor:
+	go mod vendor
+
+.PHONY: postgrespull postgres postgrescmd createdb dropdb migrateup migratedown sqlc build server test vendor
