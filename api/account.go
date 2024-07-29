@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/ChaitanyaSaiV/simple-bank/token"
+
 	db "github.com/ChaitanyaSaiV/simple-bank/internal/db/methods"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgconn"
@@ -18,7 +20,6 @@ const (
 
 // Request payload for creating an account
 type createAccountRequest struct {
-	Owner    string `json:"owner" binding:"required"`
 	Currency string `json:"currency" binding:"required,oneof=USD EUR"`
 }
 
@@ -30,8 +31,10 @@ func (server *Server) CreateAccount(ctx *gin.Context) {
 		return
 	}
 
+	authPayload := ctx.MustGet(autorizationPayloadKey).(*token.Payload)
+
 	arg := db.CreateAccountParams{
-		Owner:    req.Owner,
+		Owner:    authPayload.UserName,
 		Currency: req.Currency,
 		Balance:  0,
 	}
@@ -69,11 +72,20 @@ func (server *Server) GetAccount(ctx *gin.Context) {
 		return
 	}
 
+	authPayload := ctx.MustGet(autorizationPayloadKey).(*token.Payload)
+
+	if account.Owner != authPayload.UserName {
+		err := errors.New("account does not belongs to the user")
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
+
 	ctx.JSON(http.StatusOK, account)
 }
 
 // Request parameters for listing accounts with pagination
 type listAccountParams struct {
+	Owner    string
 	PageID   int32 `form:"page_id" binding:"required,min=1"`
 	PageSize int32 `form:"page_size" binding:"required,min=1,max=10"`
 }
@@ -86,7 +98,10 @@ func (server *Server) ListAccounts(ctx *gin.Context) {
 		return
 	}
 
+	authPayload := ctx.MustGet(autorizationPayloadKey).(*token.Payload)
+
 	arg := db.ListAccountsParams{
+		Owner:  authPayload.UserName,
 		Limit:  req.PageSize,
 		Offset: (req.PageID - 1) * req.PageSize,
 	}

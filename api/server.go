@@ -20,7 +20,7 @@ type Server struct {
 func NewServer(config util.Config, store *db.Store) (*Server, error) {
 	tokenMaker, err := token.NewPasetoMaker(config.TokenSymmetricKey)
 	if err != nil {
-		return nil, fmt.Errorf("Cannot create token maker: %w", err)
+		return nil, fmt.Errorf("cannot create token maker: %w", err)
 	}
 	server := &Server{
 		config:     config,
@@ -31,12 +31,15 @@ func NewServer(config util.Config, store *db.Store) (*Server, error) {
 
 	server.router.GET("/ping", server.Ping)
 	server.router.POST("/accounts", server.CreateAccount)
-	server.router.GET("/account/:id", server.GetAccount)
-	server.router.GET("/listaccounts", server.ListAccounts)
-	server.router.POST("/transfer", server.CreateTransfer)
-	server.router.POST("/users", server.CreateUser)
 	server.router.POST("/user/login", server.loginUser)
-	server.router.GET("/users", server.GetUser)
+
+	authRoutes := server.router.Group("/").Use(authMiddleWare(server.tokenMaker))
+
+	authRoutes.GET("/account/:id", server.GetAccount)
+	authRoutes.GET("/listaccounts", server.ListAccounts)
+	authRoutes.POST("/transfer", server.CreateTransfer)
+	authRoutes.POST("/users", server.CreateUser)
+	authRoutes.GET("/users", server.GetUser)
 	return server, nil
 }
 

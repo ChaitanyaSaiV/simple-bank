@@ -2,9 +2,11 @@ package api
 
 import (
 	"database/sql"
+	"errors"
 	"net/http"
 
 	db "github.com/ChaitanyaSaiV/simple-bank/internal/db/methods"
+	"github.com/ChaitanyaSaiV/simple-bank/token"
 	"github.com/gin-gonic/gin"
 )
 
@@ -21,10 +23,22 @@ func (s *Server) CreateTransfer(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, errorResponse(err))
 	}
 
-	if !s.ValidateAccount(ctx, req.FromAccountID, req.Currency) {
+	authPayload := ctx.MustGet(autorizationPayloadKey).(*token.Payload)
+
+	fromAccount, valid := s.ValidateAccount(ctx, req.FromAccountID, req.Currency)
+
+	if !valid {
 		return
 	}
-	if !s.ValidateAccount(ctx, req.ToAccountID, req.Currency) {
+
+	if fromAccount.Owner != authPayload.UserName {
+		err := errors.New("users not authorized to transfer money from this account")
+		ctx.JSON(http.StatusUnauthorized, errorResponse(err))
+		return
+	}
+
+	_, valid = s.ValidateAccount(ctx, req.ToAccountID, req.Currency)
+	if !valid {
 		return
 	}
 
@@ -42,18 +56,18 @@ func (s *Server) CreateTransfer(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, res)
 }
 
-func (s *Server) ValidateAccount(ctx *gin.Context, id int64, currency string) bool {
+func (s *Server) ValidateAccount(ctx *gin.Context, id int64, currency string) (db.Account, bool) {
 	account, err := s.store.GetAccount(ctx, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			ctx.JSON(http.StatusNotFound, errorResponse(err))
-			return false
+			return account, false
 		}
 		ctx.JSON(http.StatusInternalServerError, errorResponse(err))
-		return false
+		return account, false
 	}
 	if currency == account.Currency {
-		return true
+		return account, true
 	}
-	return false
+	return account, false
 }
