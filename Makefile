@@ -2,7 +2,7 @@ postgrespull:
 	docker pull postgres:latest
 
 postgres:
-	docker run -d --name postgres -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret postgres
+	docker run -d --name postgres --network bank-network -p 5432:5432 -e POSTGRES_USER=root -e POSTGRES_PASSWORD=secret postgres
 
 postgrescmd:
 	docker exec -it postgres psql -U root
@@ -23,10 +23,16 @@ sqlc:
 	sqlc generate
 
 build:
-	go build -o simple-bank ./cmd/main.go
+	go build -o main ./cmd/main.go
 
 server:
 	go run ./cmd/.
+
+image:
+	docker build -t simplebank:latest .
+
+container:
+	docker run --name simplebank --network bank-network -p 8080:8080 -e DB_SOURCE="postgresql://root:secret@postgres:5432/simple_bank?sslmode=disable" simplebank:latest
 
 test:
 	go test -v -cover ./...
@@ -34,4 +40,4 @@ test:
 vendor:
 	go mod vendor
 
-.PHONY: postgrespull postgres postgrescmd createdb dropdb migrateup migratedown sqlc build server test vendor
+.PHONY: postgrespull postgres postgrescmd createdb dropdb migrateup migratedown sqlc build server image container test vendor
