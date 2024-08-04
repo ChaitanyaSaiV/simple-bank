@@ -30,7 +30,7 @@ func NewServer(config util.Config, store *db.Store) (*Server, error) {
 	}
 
 	server.router.GET("/ping", server.Ping)
-	server.router.POST("/accounts", server.CreateAccount)
+	server.router.POST("/users", server.CreateUser)
 	server.router.POST("/user/login", server.loginUser)
 
 	authRoutes := server.router.Group("/").Use(authMiddleWare(server.tokenMaker))
@@ -38,7 +38,7 @@ func NewServer(config util.Config, store *db.Store) (*Server, error) {
 	authRoutes.GET("/account/:id", server.GetAccount)
 	authRoutes.GET("/listaccounts", server.ListAccounts)
 	authRoutes.POST("/transfer", server.CreateTransfer)
-	authRoutes.POST("/users", server.CreateUser)
+	authRoutes.POST("/accounts", server.CreateAccount)
 	authRoutes.GET("/users", server.GetUser)
 	return server, nil
 }
