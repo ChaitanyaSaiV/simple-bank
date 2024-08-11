@@ -40,4 +40,7 @@ test:
 vendor:
 	go mod vendor
 
-.PHONY: postgrespull postgres postgrescmd createdb dropdb migrateup migratedown sqlc build server image container test vendor
+docker_auth_ecr:
+	aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 737112915427.dkr.ecr.us-east-1.amazonaws.com
+
+.PHONY: postgrespull postgres postgrescmd createdb dropdb migrateup migratedown sqlc build server image container test vendor docker_auth_ecr
